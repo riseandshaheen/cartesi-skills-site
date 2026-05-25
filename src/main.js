@@ -47,6 +47,9 @@ const COPY_FEEDBACK_MS = 1100;
 /** Hero strip: how long the checkmark / “copied” state stays visible. */
 const HERO_COPY_FEEDBACK_MS = 720;
 
+/** Prompt cards: how long the “Copied” label stays visible. */
+const PROMPT_COPY_FEEDBACK_MS = 1100;
+
 const copyInstallBtn = document.getElementById("copy-install");
 
 const COPY_INSTALL_LABEL = "Copy install command";
@@ -167,6 +170,40 @@ function closeSkillModal() {
     modalBody.textContent = "";
   }
 }
+
+document.querySelectorAll(".prompt-card__copy").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const card = btn.closest(".card--prompt");
+    const source = card?.querySelector(".prompt-card__text");
+    const label = btn.querySelector(".prompt-card__copy-label");
+    const text = source?.value?.trim();
+    if (!text) return;
+
+    const prevLabel = label?.textContent ?? "Copy prompt";
+    const prevAria = btn.getAttribute("aria-label") ?? "Copy prompt";
+
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.classList.add("is-copied");
+      if (label) label.textContent = "Copied";
+      btn.setAttribute("aria-label", "Copied to clipboard");
+      setTimeout(() => {
+        btn.classList.remove("is-copied");
+        if (label) label.textContent = prevLabel;
+        btn.setAttribute("aria-label", prevAria);
+        btn.blur();
+      }, PROMPT_COPY_FEEDBACK_MS);
+    } catch {
+      if (label) label.textContent = "Failed";
+      btn.setAttribute("aria-label", "Could not copy");
+      setTimeout(() => {
+        if (label) label.textContent = prevLabel;
+        btn.setAttribute("aria-label", prevAria);
+        btn.blur();
+      }, PROMPT_COPY_FEEDBACK_MS);
+    }
+  });
+});
 
 document.querySelectorAll(".card[data-skill]").forEach((el) => {
   el.addEventListener("click", () => {
